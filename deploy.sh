@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -e
 
 # Cria o arquivo do banco SQLite se ele não existir
 mkdir -p database
