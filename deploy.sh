@@ -32,6 +32,24 @@ composer dump-autoload --optimize --no-scripts
 php artisan migrate --force
 php artisan db:seed --class="Database\\Seeders\\DatabaseSeeder" --no-interaction || true
 
+# 5.1) Verifica se existe pelo menos UMA tabela de usuário na DB SQLite (exclui tabelas internas sqlite_*)
+# Se o arquivo do volume estiver vazio, executa migrations e seed (não destrutivo)
+php -r "
+try {
+  \$db = getenv('DB_DATABASE') ?: 'database/database.sqlite';
+  \$pdo = new PDO('sqlite:' . \$db);
+  \$stmt = \$pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' LIMIT 1;");
+  \$hasTables = (bool) (\$stmt && \$stmt->fetch());
+  exit(\$hasTables ? 0 : 1);
+} catch (Exception \$e) {
+  exit(1);
+}
+" || {
+  echo "No user tables found in SQLite — running migrations and seeder";
+  php artisan migrate --force || true;
+  php artisan db:seed --class=\"Database\\Seeders\\DatabaseSeeder\" --no-interaction || true;
+}
+
 # 6) Reaplica permissões após criar arquivos pelo framework
 chmod -R 0777 "$(dirname "$DB_PATH")" || true
 chmod 0666 "$DB_PATH" || true
