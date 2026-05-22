@@ -15,6 +15,9 @@ chmod -R 0777 "$(dirname "$DB_PATH")" || true
 chmod 0666 "$DB_PATH" || true
 chmod -R 0777 storage bootstrap/cache || true
 
+# Exporta DB_DATABASE para garantir que todos os comandos usem o arquivo do volume montado
+export DB_DATABASE="$DB_PATH"
+
 # 2) Limpa caches antigos antes de qualquer outra ação (evita usar caches quebrados do build anterior)
 php artisan config:clear || true
 php artisan route:clear || true
