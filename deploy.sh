@@ -11,6 +11,7 @@ mkdir -p "$(dirname "$DB_PATH")"
 touch "$DB_PATH"
 
 # Garante permissões básicas para que o processo web consiga escrever no SQLite e caches
+chmod -R 0777 "$(dirname "$DB_PATH")" || true
 chmod 0666 "$DB_PATH" || true
 chmod -R 0777 storage bootstrap/cache || true
 
@@ -32,6 +33,7 @@ php artisan migrate --force
 php artisan db:seed --class="Database\\Seeders\\DatabaseSeeder" --no-interaction || true
 
 # 6) Reaplica permissões após criar arquivos pelo framework
+chmod -R 0777 "$(dirname "$DB_PATH")" || true
 chmod 0666 "$DB_PATH" || true
 chmod -R 0777 storage bootstrap/cache || true
 
