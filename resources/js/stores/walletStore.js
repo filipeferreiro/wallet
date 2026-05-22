@@ -58,8 +58,7 @@ export const useWalletStore = defineStore('wallet', () => {
     async function deposit(amount) {
         const response = await api.post('/wallet/deposit', { amount });
         balance.value = response.data.balance;
-        latestTransactions.value = [];
-        metrics.value = { total_deposited_month: 0, total_withdrawn_month: 0 };
+        await fetchDashboard(); // Atualiza transações e métricas imediatamente
         return response.data;
     }
 
@@ -70,8 +69,7 @@ export const useWalletStore = defineStore('wallet', () => {
     async function withdraw(amount) {
         const response = await api.post('/wallet/withdraw', { amount });
         balance.value = response.data.balance;
-        latestTransactions.value = [];
-        metrics.value = { total_deposited_month: 0, total_withdrawn_month: 0 };
+        await fetchDashboard(); // Atualiza transações e métricas imediatamente
         return response.data;
     }
 
