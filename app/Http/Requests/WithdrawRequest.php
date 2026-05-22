@@ -23,7 +23,7 @@ class WithdrawRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'amount' => ['required', 'numeric', 'gt:0'],
+            'amount' => ['required', 'numeric', 'gt:0', 'regex:/^\d+(\.\d{1,2})?$/'],
         ];
     }
 
@@ -33,6 +33,7 @@ class WithdrawRequest extends FormRequest
             'amount.required' => 'O valor do saque é obrigatório.',
             'amount.numeric' => 'O valor deve ser um número válido.',
             'amount.gt' => 'O valor do saque deve ser maior que zero.',
+            'amount.regex' => 'O valor deve ter no máximo 2 casas decimais.',
         ];
     }
 }

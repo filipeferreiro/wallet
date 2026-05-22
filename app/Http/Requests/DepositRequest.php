@@ -23,15 +23,17 @@ class DepositRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'amount' => ['required', 'numeric', 'gt:0'],
+            'amount' => ['required', 'numeric', 'gt:0', 'regex:/^\d+(\.\d{1,2})?$/'],
         ];
     }
 
-    public function messages(): array{
+    public function messages(): array
+    {
         return [
             'amount.required' => 'O valor do depósito é obrigatório.',
             'amount.numeric' => 'O valor deve ser um número válido.',
             'amount.gt' => 'O valor do depósito deve ser maior que zero.',
+            'amount.regex' => 'O valor deve ter no máximo 2 casas decimais.',
         ];
     }
 }

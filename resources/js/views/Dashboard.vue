@@ -82,9 +82,11 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useWalletStore } from '../stores/walletStore';
 import { useRouter } from 'vue-router';
+import { useFormatters } from '../composables/useFormatters';
 
 const walletStore = useWalletStore();
 const router = useRouter();
+const { formatCurrency, formatDate } = useFormatters();
 
 const amountDeposit = ref('');
 const amountWithdraw = ref('');
@@ -98,14 +100,15 @@ onMounted(() => {
   walletStore.fetchDashboard();
 });
 
-const formatCurrency = (val) => Number(val).toFixed(2).replace('.', ',');
-const formatDate = (dateStr) => new Date(dateStr).toLocaleString('pt-BR');
-
 const clearFeedback = () => {
   feedback.deposit = { msg: '', type: '' };
   feedback.withdraw = { msg: '', type: '' };
 };
 
+/**
+ * Executa depósito e atualiza feedback do usuário.
+ * Limpa o input após sucesso.
+ */
 const executeDeposit = async () => {
   clearFeedback();
   try {
@@ -113,16 +116,25 @@ const executeDeposit = async () => {
     feedback.deposit = { msg: res.message, type: 'success' };
     amountDeposit.value = '';
   } catch (err) {
-    feedback.deposit = { msg: err.response?.data?.message || 'Erro no depósito.', type: 'error' };
+    feedback.deposit = { 
+      msg: err.response?.data?.error || 'Erro no depósito.', 
+      type: 'error' 
+    };
   }
 };
 
+/**
+ * Executa saque com validação redundante de saldo no frontend
+ * para melhor UX (validação no backend garante integridade).
+ */
 const executeWithdraw = async () => {
   clearFeedback();
   
-  // Validação explícita no Frontend exigida no escopo (saldo insuficiente antes da request)
   if (amountWithdraw.value > walletStore.balance) {
-    feedback.withdraw = { msg: 'Saldo insuficiente para realizar esta operação.', type: 'error' };
+    feedback.withdraw = { 
+      msg: 'Saldo insuficiente para realizar esta operação.', 
+      type: 'error' 
+    };
     return;
   }
 
@@ -131,7 +143,10 @@ const executeWithdraw = async () => {
     feedback.withdraw = { msg: res.message, type: 'success' };
     amountWithdraw.value = '';
   } catch (err) {
-    feedback.withdraw = { msg: err.response?.data?.message || 'Erro no saque.', type: 'error' };
+    feedback.withdraw = { 
+      msg: err.response?.data?.error || 'Erro no saque.', 
+      type: 'error' 
+    };
   }
 };
 

@@ -5,23 +5,31 @@ namespace App\Http\Controllers;
 use App\Http\Requests\DepositRequest;
 use App\Http\Requests\WithdrawRequest;
 use App\Services\WalletService;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 
 class WalletController extends Controller
 {
-    protected $walletService;
+    protected WalletService $walletService;
 
     public function __construct(WalletService $walletService)
     {
         $this->walletService = $walletService;
     }
 
+    /**
+     * Recupera ou cria a carteira do usuário autenticado.
+     */
+    private function getOrCreateUserWallet(Request $request): Wallet
+    {
+        return $request->user()->wallet()->firstOrCreate(['user_id' => $request->user()->id]);
+    }
+
     public function dashboard(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $wallet = $user->wallet()->firstOrCreate(['user_id' => $user->id]);
+        $wallet = $this->getOrCreateUserWallet($request);
         $now = Carbon::now();
 
         $latestTransactions = $wallet->transactions()
@@ -51,37 +59,39 @@ class WalletController extends Controller
         ]);
     }
 
-    public function deposit(DepositRequest $request): JsonResponse{
-        $wallet = $request->user()->wallet()->firstOrCreate(['user_id' => $request->user()->id]);
+    public function deposit(DepositRequest $request): JsonResponse
+    {
+        $wallet = $this->getOrCreateUserWallet($request);
 
-        try{
-            $updatedWallet = $this->walletService->deposit($wallet, $request->amount);
+        try {
+            $updatedWallet = $this->walletService->deposit($wallet, $request->validated()['amount']);
             return response()->json([
                 'message' => 'Depósito realizado com sucesso!',
                 'balance' => $updatedWallet->balance
             ], 200);
-        }catch(\Exception $e){
-            return response()->json(['error' => $e->getMessage()], $e->getCode());
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
     }
 
-    public function withdraw(WithdrawRequest $request): JsonResponse{
-        $wallet = $request->user()->wallet()->firstOrCreate(['user_id' => $request->user()->id]);
+    public function withdraw(WithdrawRequest $request): JsonResponse
+    {
+        $wallet = $this->getOrCreateUserWallet($request);
 
-        try{
-            $updatedWallet = $this->walletService->withdraw($wallet, $request->amount);
+        try {
+            $updatedWallet = $this->walletService->withdraw($wallet, $request->validated()['amount']);
             return response()->json([
                 'message' => 'Saque realizado com sucesso!',
                 'balance' => $updatedWallet->balance
             ], 200);
-        }catch(\Exception $e){
-            return response()->json(['error' => $e->getMessage()], $e->getCode());
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
     }
 
     public function history(Request $request): JsonResponse
     {
-        $wallet = $request->user()->wallet()->firstOrCreate(['user_id' => $request->user()->id]);
+        $wallet = $this->getOrCreateUserWallet($request);
         $query = $wallet->transactions()->orderBy('created_at', 'desc');
 
         if ($request->has('type') && in_array($request->type, ['credit', 'debit'])) {
