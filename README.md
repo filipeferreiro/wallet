@@ -499,3 +499,64 @@ Este projeto está licenciado sob a licença MIT — veja o arquivo [LICENSE](./
 **Desenvolvido com ❤️ para avaliação técnica — Teck Soluções**
 
 *Versão 1.0 — Maio de 2026*
+
+---
+
+## 🐳 Docker & Deploy no Railway
+
+Se você escolheu usar Docker (recomendado para ambientes reproduzíveis), este projeto já inclui um `Dockerfile` pronto. Abaixo está o procedimento mínimo para configurar o Railway e comandos úteis para testes locais.
+
+### Dockerfile Path (Railway)
+
+No painel do Railway, em _Settings_ do service, aponte o campo **Dockerfile Path** para:
+
+```
+Dockerfile
+```
+
+### Build & Start (Railway)
+
+- Build: o Railway irá construir a imagem usando o `Dockerfile` do repositório.
+- Start: deixe o `Start Command` em branco e use o `Procfile` (`web: bash start.sh`) ou defina `Start Command` como:
+
+```
+bash start.sh
+```
+
+### Variáveis de Ambiente ESSENCIAIS (Railway)
+
+Configure estas variáveis no painel do Railway (Environment Variables):
+
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `DB_CONNECTION=sqlite`
+- `DB_DATABASE=/app/database/database.sqlite`
+- `CACHE_STORE=file`
+- `SESSION_DRIVER=file`
+- `QUEUE_CONNECTION=sync`
+- `PORT=8080` (opcional — Railway injeta uma porta automaticamente)
+
+Também mantenha as outras variáveis sensíveis (APP_KEY, MAIL_*, etc.).
+
+### Volume (Railway)
+
+Monte o volume `wallet-volume` no path `/app/database` para persistir o arquivo SQLite. Isso garante que o banco sobreviva a reinícios.
+
+### Comandos Docker locais (teste rápido)
+
+```bash
+# Build
+docker build -t wallet-app .
+
+# Roda com volume montado para persistência
+docker run --rm -p 8080:8080 -v $(pwd)/database:/app/database --env-file .env -e DB_DATABASE=/app/database/database.sqlite wallet-app
+```
+
+Após o container iniciar, acesse `http://localhost:8080`.
+
+### Observações práticas
+- O `deploy.sh` já garante criação do arquivo SQLite no caminho apontado por `DB_DATABASE` e aplica migrations+seed automaticamente se o DB estiver vazio.
+- `start.sh` lida com fallback (Apache helper ou `php -S`) e o `Procfile` invoca `bash start.sh`.
+- Certifique-se que `start.sh` esteja com permissão executável (`chmod +x start.sh`) — o `Dockerfile` já faz isso.
+
+Se quiser que eu gere uma versão `Dockerfile` multi-stage mais enxuta (imagem final menor), eu posso criar em seguida.
