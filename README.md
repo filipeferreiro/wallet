@@ -149,6 +149,10 @@ php -v && composer -V && node -v && npm -v && sqlite3 --version
 
 ---
 
+## 🚀 Link do projeto em Produção com Railway
+
+- [Wallet](https://wallet-production-fc4b.up.railway.app/)
+
 ## 🚀 Instruções de Instalação e Configuração Local
 
 ### 1. Clonar o Repositório
@@ -559,4 +563,4 @@ Após o container iniciar, acesse `http://localhost:8080`.
 - `start.sh` lida com fallback (Apache helper ou `php -S`) e o `Procfile` invoca `bash start.sh`.
 - Certifique-se que `start.sh` esteja com permissão executável (`chmod +x start.sh`) — o `Dockerfile` já faz isso.
 
-Se quiser que eu gere uma versão `Dockerfile` multi-stage mais enxuta (imagem final menor), eu posso criar em seguida.
+
