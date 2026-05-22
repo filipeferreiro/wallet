@@ -5,6 +5,9 @@ set -e
 # Executa script de deploy (migrations, seeds, permissões)
 bash deploy.sh
 
+echo "Running runtime database migrations..."
+php artisan migrate --force
+
 # Verifica helper Apache em vendor/bin ou no PATH antes de executar
 APACHE_HELPER=""
 
