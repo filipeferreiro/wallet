@@ -34,21 +34,28 @@ php artisan db:seed --class="Database\\Seeders\\DatabaseSeeder" --no-interaction
 
 # 5.1) Verifica se existe pelo menos UMA tabela de usuário na DB SQLite (exclui tabelas internas sqlite_*)
 # Se o arquivo do volume estiver vazio, executa migrations e seed (não destrutivo)
-php -r "
+
+# Cria um script PHP temporário para evitar problemas de quoting com php -r
+cat > /tmp/check_db.php <<'PHP'
+<?php
 try {
-  \$db = getenv('DB_DATABASE') ?: 'database/database.sqlite';
-  \$pdo = new PDO('sqlite:' . \$db);
-  \$stmt = \$pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' LIMIT 1;");
-  \$hasTables = (bool) (\$stmt && \$stmt->fetch());
-  exit(\$hasTables ? 0 : 1);
-} catch (Exception \$e) {
-  exit(1);
+    $db = getenv('DB_DATABASE') ?: 'database/database.sqlite';
+    $pdo = new PDO('sqlite:' . $db);
+    $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' LIMIT 1;");
+    $hasTables = (bool) ($stmt && $stmt->fetch());
+    exit($hasTables ? 0 : 1);
+} catch (Exception $e) {
+    exit(1);
 }
-" || {
+PHP
+
+php /tmp/check_db.php || {
   echo "No user tables found in SQLite — running migrations and seeder";
   php artisan migrate --force || true;
-  php artisan db:seed --class=\"Database\\Seeders\\DatabaseSeeder\" --no-interaction || true;
+  php artisan db:seed --class="Database\\Seeders\\DatabaseSeeder" --no-interaction || true;
 }
+
+rm -f /tmp/check_db.php || true
 
 # 6) Reaplica permissões após criar arquivos pelo framework
 chmod -R 0777 "$(dirname "$DB_PATH")" || true
