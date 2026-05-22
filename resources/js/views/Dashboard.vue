@@ -32,9 +32,6 @@
         
         <div class="border-b md:border-b-0 md:border-r md:pr-6 pb-6 md:pb-0">
           <h3 class="text-lg font-bold text-gray-800 mb-4">Efetuar Depósito</h3>
-          <div v-if="feedback.deposit.msg" :class="feedback.deposit.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'" class="p-2 mb-3 rounded text-sm">
-            {{ feedback.deposit.msg }}
-          </div>
           <form @submit.prevent="executeDeposit" class="space-y-3">
             <input v-model.number="amountDeposit" type="number" step="0.01" min="0.01" placeholder="Valor (R$)" required class="w-full rounded-md border-gray-300 shadow-sm p-2 bg-gray-50 border focus:ring-indigo-500 focus:border-indigo-500" />
             <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md shadow-sm text-sm">Depositar</button>
@@ -43,9 +40,6 @@
 
         <div>
           <h3 class="text-lg font-bold text-gray-800 mb-4">Efetuar Saque</h3>
-          <div v-if="feedback.withdraw.msg" :class="feedback.withdraw.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'" class="p-2 mb-3 rounded text-sm">
-            {{ feedback.withdraw.msg }}
-          </div>
           <form @submit.prevent="executeWithdraw" class="space-y-3">
             <input v-model.number="amountWithdraw" type="number" step="0.01" min="0.01" placeholder="Valor (R$)" required class="w-full rounded-md border-gray-300 shadow-sm p-2 bg-gray-50 border focus:ring-indigo-500 focus:border-indigo-500" />
             <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md shadow-sm text-sm">Sacar</button>
@@ -91,35 +85,18 @@ const { formatCurrency, formatDate } = useFormatters();
 const amountDeposit = ref('');
 const amountWithdraw = ref('');
 
-const feedback = reactive({
-  deposit: { msg: '', type: '' },
-  withdraw: { msg: '', type: '' }
-});
-
 onMounted(() => {
   walletStore.fetchDashboard();
 });
 
-const clearFeedback = () => {
-  feedback.deposit = { msg: '', type: '' };
-  feedback.withdraw = { msg: '', type: '' };
-};
-
-/**
- * Executa depósito e atualiza feedback do usuário.
- * Limpa o input após sucesso.
- */
 const executeDeposit = async () => {
-  clearFeedback();
   try {
     const res = await walletStore.deposit(amountDeposit.value);
-    feedback.deposit = { msg: res.message, type: 'success' };
+    walletStore.addToast(res.message, 'success');
     amountDeposit.value = '';
   } catch (err) {
-    feedback.deposit = { 
-      msg: err.response?.data?.error || 'Erro no depósito.', 
-      type: 'error' 
-    };
+    const errorMsg = err.response?.data?.error || 'Erro no depósito.';
+    walletStore.addToast(errorMsg, 'error');
   }
 };
 
@@ -128,25 +105,19 @@ const executeDeposit = async () => {
  * para melhor UX (validação no backend garante integridade).
  */
 const executeWithdraw = async () => {
-  clearFeedback();
   
   if (amountWithdraw.value > walletStore.balance) {
-    feedback.withdraw = { 
-      msg: 'Saldo insuficiente para realizar esta operação.', 
-      type: 'error' 
-    };
+    walletStore.addToast('Saldo insuficiente para realizar esta operação.', 'error');
     return;
   }
 
   try {
     const res = await walletStore.withdraw(amountWithdraw.value);
-    feedback.withdraw = { msg: res.message, type: 'success' };
+    walletStore.addToast(res.message, 'success');
     amountWithdraw.value = '';
   } catch (err) {
-    feedback.withdraw = { 
-      msg: err.response?.data?.error || 'Erro no saque.', 
-      type: 'error' 
-    };
+    const errorMsg = err.response?.data?.error || 'Erro no saque.';
+    walletStore.addToast(errorMsg, 'error');
   }
 };
 

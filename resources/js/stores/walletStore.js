@@ -5,11 +5,22 @@ import api from '../services/api';
 export const useWalletStore = defineStore('wallet', () => {
     const user = ref(JSON.parse(localStorage.getItem('user')) || null);
     const token = ref(localStorage.getItem('token') || null);
+    const toasts = ref([]);
     const balance = ref(0);
     const latestTransactions = ref([]);
     const metrics = ref({ total_deposited_month: 0, total_withdrawn_month: 0 });
 
     const isAuthenticated = computed(() => !!token.value);
+
+    async function addToast(message, type = 'success', duration = 4000) {
+        const id = Date.now() + Math.random();
+        
+        toasts.value.push({ id, message, type });
+
+        setTimeout(() => {
+            toasts.value = toasts.value.filter(t => t.id !== id);
+        }, duration);
+    }
 
     async function login(credentials) {
         const response = await api.post('/login', credentials);
@@ -80,6 +91,8 @@ export const useWalletStore = defineStore('wallet', () => {
         latestTransactions,
         metrics,
         isAuthenticated,
+        toasts,
+        addToast,
         login,
         register,
         logout,
